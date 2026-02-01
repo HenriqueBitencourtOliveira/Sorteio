@@ -6,219 +6,305 @@
     <title>Sorteio de Times</title>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f4f4f9;
             margin: 0;
             padding: 20px;
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Alinhar no topo */
+            align-items: flex-start;
             min-height: 100vh;
-            flex-direction: column;
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 2.5em;
-            text-align: center;
-            width: 100%;
         }
 
         .container {
             background-color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 400px;
-            margin: 0 auto; /* Centralizar o container */
+            max-width: 450px;
+            text-align: center;
         }
 
+        h1 { margin-bottom: 20px; color: #333; }
+
+        .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+
         #playerInput {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin-bottom: 10px;
+            flex: 1;
+            padding: 12px;
             border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 1em;
+            border-radius: 6px;
+            font-size: 16px;
         }
 
         button {
-            background-color: #007bff;
-            color: white;
+            padding: 12px 20px;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 1em;
-            transition: background-color 0.3s ease;
-            width: 100%;
-            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: 0.2s;
         }
 
-        button:hover {
-            background-color: #0056b3;
-        }
+        .btn-add { background-color: #28a745; color: white; }
+        .btn-add:hover { background-color: #218838; }
+
+        .btn-sortear { background-color: #007bff; color: white; width: 100%; margin-top: 10px; }
+        .btn-sortear:hover { background-color: #0056b3; }
+
+        .btn-limpar { background-color: #6c757d; color: white; margin-top: 5px; width: 100%; }
 
         #playersList {
             margin-top: 20px;
             text-align: left;
-            max-height: 200px; /* Limitar altura da lista */
-            overflow-y: auto; /* Adicionar scroll se necessário */
+            max-height: 200px;
+            overflow-y: auto;
+            border-top: 1px solid #eee;
         }
 
         .player-item {
-            background-color: #f9f9f9;
-            padding: 10px;
+            background-color: #f8f9fa;
+            padding: 8px 12px;
             margin: 5px 0;
-            border-radius: 5px;
-            border: 1px solid #eee;
+            border-radius: 4px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border: 1px solid #e9ecef;
         }
 
-        .player-item button {
-            background-color: #ff4d4d;
-            border: none;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-            width: 30%;
-            font-size: 0.9em;
+        .player-item span {
+            font-weight: 500;
+            color: #333;
         }
 
-        .player-item button:hover {
-            background-color: #cc0000;
+        .delete-btn {
+            background-color: transparent;
+            color: #dc3545;
+            border: 1px solid #dc3545;
+            padding: 4px 8px;
+            font-size: 12px;
         }
+        .delete-btn:hover { background-color: #dc3545; color: white; }
 
-        #teams {
-            margin-top: 20px;
-            text-align: left;
-        }
+        #teams { margin-top: 25px; text-align: left; }
 
         .team {
-            background-color: #e9ecef;
+            background-color: #e3f2fd;
             padding: 15px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ddd;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #bbdefb;
         }
-
-        .team strong {
-            color: #333;
-            font-size: 1.2em;
-        }
+        .team h3 { margin: 0 0 10px 0; font-size: 18px; color: #0d47a1; }
+        .team ul { padding-left: 20px; margin: 0; }
+        .team li { list-style: none; margin-bottom: 4px; }
     </style>
 </head>
 <body>
-    <h1>Sorteio de Times</h1>
+
     <div class="container">
-        <input type="text" id="playerInput" placeholder="Digite o nome do jogador">
-        <button onclick="adicionarJogador()">Adicionar Jogador</button>
+        <h1>Sorteio de Times</h1>
+        
+        <div class="input-group">
+            <input type="text" id="playerInput" placeholder="Nome do jogador..." onkeypress="handleEnter(event)">
+            <button class="btn-add" onclick="adicionarJogador()">+</button>
+        </div>
 
         <div id="playersList"></div>
-        <button onclick="sortearTimes()">Sortear Times</button>
+        
+        <button class="btn-sortear" onclick="sortearTimes()">Sortear Times</button>
+        <button class="btn-limpar" onclick="limparTudo()">Limpar Tudo</button>
 
         <div id="teams"></div>
     </div>
 
-    <script>
+   <script>
         let players = [];
+        
+        // --- CONFIGURAÇÕES E REGRAS ---
+        const CABECAS_DE_CHAVE = ['kauan', 'henrique', 'kaike']; 
+        const DUPLA_DINAMICA = { lider: 'henrique', parceiro: 'careca' };
+        const RESTRICAO_FELIPE = { jogador: 'fellipe', evitar: ['kauan', 'kaike'] };
+        
+        const MAX_TIMES = 4;
+        const MAX_JOGADORES_POR_TIME = 5;
 
-        function adicionarJogador() {
-            const playerInput = document.getElementById('playerInput');
-            const playerName = playerInput.value.trim();
-
-            if (playerName) {
-                players.push(playerName);
-                atualizarListaJogadores();
-                playerInput.value = ''; // Limpa o campo de input
-            }
+        function handleEnter(e) {
+            if (e.key === 'Enter') adicionarJogador();
         }
 
-        function atualizarListaJogadores() {
-            const playersList = document.getElementById('playersList');
-            playersList.innerHTML = ''; // Limpa a lista atual
-
-            players.forEach((player, index) => {
-                const playerItem = document.createElement('div');
-                playerItem.className = 'player-item';
-                playerItem.innerHTML = `
-                    <span>${index + 1}. ${player}</span>
-                    <button onclick="removerJogador(${index})">Remover</button>
-                `;
-                playersList.appendChild(playerItem);
-            });
+        function adicionarJogador() {
+            const input = document.getElementById('playerInput');
+            const nome = input.value.trim();
+            if (!nome) return;
+            if (players.some(p => p.toLowerCase() === nome.toLowerCase())) {
+                alert("Jogador já adicionado!");
+                return;
+            }
+            if (players.length >= 20) {
+                alert("Máximo de 20 jogadores atingido!");
+                return;
+            }
+            players.push(nome);
+            atualizarLista();
+            input.value = '';
+            input.focus();
         }
 
         function removerJogador(index) {
-            players.splice(index, 1); // Remove o jogador da lista
-            atualizarListaJogadores(); // Atualiza a lista exibida
+            players.splice(index, 1);
+            atualizarLista();
         }
 
-        function sortearTimes() {
-            if (players.length === 0) {
-                alert("Adicione pelo menos um jogador!");
-                return;
-            }
+        function limparTudo() {
+            players = [];
+            document.getElementById('teams').innerHTML = '';
+            atualizarLista();
+        }
 
-            // Jogadores especiais que não podem ficar no mesmo time
-            const specialPlayers = ['Henrique', 'Rafael', 'Kauan'];
-            const otherPlayers = players.filter(player => !specialPlayers.includes(player));
-
-            // Embaralhar todos os jogadores (incluindo os especiais)
-            const allPlayers = shuffleArray([...otherPlayers, ...specialPlayers.filter(player => players.includes(player))]);
-
-            // Dividir os times
-            const teams = [];
-            let teamIndex = 0;
-
-            // Distribuir os jogadores nos times
-            allPlayers.forEach(player => {
-                if (!teams[teamIndex]) {
-                    teams[teamIndex] = [];
-                }
-
-                // Verificar se o time atual já tem um jogador especial
-                const hasSpecialPlayer = teams[teamIndex].some(p => specialPlayers.includes(p));
-
-                // Se o jogador atual for especial e o time já tiver outro especial, mudar de time
-                if (specialPlayers.includes(player) && hasSpecialPlayer) {
-                    teamIndex = (teamIndex + 1) % Math.ceil(allPlayers.length / 5); // Muda para o próximo time
-                    if (!teams[teamIndex]) {
-                        teams[teamIndex] = [];
-                    }
-                }
-
-                // Adicionar o jogador ao time atual
-                teams[teamIndex].push(player);
-
-                // Passar para o próximo time se o time atual já tiver 5 jogadores
-                if (teams[teamIndex].length >= 5) {
-                    teamIndex = (teamIndex + 1) % Math.ceil(allPlayers.length / 5);
-                }
-            });
-
-            // Exibir os times
-            const teamsDiv = document.getElementById('teams');
-            teamsDiv.innerHTML = '';
-            teams.forEach((team, index) => {
-                const teamDiv = document.createElement('div');
-                teamDiv.className = 'team';
-                teamDiv.innerHTML = `<strong>Time ${index + 1}:</strong> ${team.join(', ')}`;
-                teamsDiv.appendChild(teamDiv);
+        function atualizarLista() {
+            const list = document.getElementById('playersList');
+            list.innerHTML = '';
+            players.forEach((player, index) => {
+                const div = document.createElement('div');
+                div.className = 'player-item';
+                div.innerHTML = `<span>${index + 1}. ${player}</span><button class="delete-btn" onclick="removerJogador(${index})">X</button>`;
+                list.appendChild(div);
             });
         }
 
-        function shuffleArray(array) {
+        function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [array[i], array[j]] = [array[j], array[i]];
             }
             return array;
+        }
+
+        function sortearTimes() {
+            if (players.length === 0) {
+                alert("Adicione jogadores antes de sortear.");
+                return;
+            }
+
+            let times = Array.from({ length: MAX_TIMES }, () => []);
+            let seedsDisponiveis = [];
+            let restoDosJogadores = [];
+            
+            // Variáveis especiais
+            let carecaEncontrado = null;
+            let fellipeEncontrado = null;
+
+            // 1. Separação inicial dos jogadores
+            players.forEach(nomeOriginal => {
+                const nomeLower = nomeOriginal.toLowerCase();
+
+                if (nomeLower === DUPLA_DINAMICA.parceiro) {
+                    carecaEncontrado = nomeOriginal;
+                } 
+                else if (nomeLower === RESTRICAO_FELIPE.jogador) {
+                    fellipeEncontrado = nomeOriginal;
+                }
+                else if (CABECAS_DE_CHAVE.includes(nomeLower)) {
+                    seedsDisponiveis.push(nomeOriginal);
+                } 
+                else {
+                    restoDosJogadores.push(nomeOriginal);
+                }
+            });
+
+            seedsDisponiveis = shuffle(seedsDisponiveis);
+            restoDosJogadores = shuffle(restoDosJogadores);
+
+            // 2. Distribui Cabeças de Chave (Kauan, Henrique, Kaike)
+            seedsDisponiveis.forEach((seed, i) => {
+                if (i < MAX_TIMES) {
+                    times[i].push(seed);
+                } else {
+                    restoDosJogadores.push(seed); 
+                }
+            });
+
+            // 3. Resolve a "Dupla Dinâmica" (Henrique + Careca)
+            let indexTimeHenrique = -1;
+            times.forEach((time, index) => {
+                time.forEach(jogador => {
+                    if (jogador.toLowerCase() === DUPLA_DINAMICA.lider) {
+                        indexTimeHenrique = index;
+                    }
+                });
+            });
+
+            if (indexTimeHenrique !== -1 && carecaEncontrado) {
+                times[indexTimeHenrique].push(carecaEncontrado);
+            } else if (carecaEncontrado) {
+                restoDosJogadores.push(carecaEncontrado);
+            }
+
+            // 4. Resolve o caso do "Fellipe" (Não pode com Kauan nem Kaike)
+            if (fellipeEncontrado) {
+                let timesValidosParaFellipe = [];
+                
+                times.forEach((time, index) => {
+                    const temProibido = time.some(jogador => 
+                        RESTRICAO_FELIPE.evitar.includes(jogador.toLowerCase())
+                    );
+                    
+                    if (!temProibido) {
+                        timesValidosParaFellipe.push(index);
+                    }
+                });
+
+                if (timesValidosParaFellipe.length > 0) {
+                    const indexSorteado = timesValidosParaFellipe[Math.floor(Math.random() * timesValidosParaFellipe.length)];
+                    times[indexSorteado].push(fellipeEncontrado);
+                } else {
+                    restoDosJogadores.push(fellipeEncontrado);
+                }
+            }
+
+            // 5. Distribui o resto da galera
+            restoDosJogadores = shuffle(restoDosJogadores);
+            let timeAtual = 0;
+            
+            while (restoDosJogadores.length > 0) {
+                if (times[timeAtual].length >= MAX_JOGADORES_POR_TIME) {
+                    timeAtual = (timeAtual + 1) % MAX_TIMES;
+                    
+                    if (times.every(t => t.length >= MAX_JOGADORES_POR_TIME)) {
+                         alert("Atenção: Times lotados! Alguns jogadores ficaram de fora.");
+                         break;
+                    }
+                    continue;
+                }
+
+                const jogador = restoDosJogadores.pop();
+                times[timeAtual].push(jogador);
+                timeAtual = (timeAtual + 1) % MAX_TIMES;
+            }
+
+            // 6. Mistura final dentro dos times
+            times.forEach(time => shuffle(time));
+
+            renderizarTimes(times);
+        }
+
+        function renderizarTimes(times) {
+            const container = document.getElementById('teams');
+            container.innerHTML = '';
+            times.forEach((time, index) => {
+                if (time.length > 0) {
+                    const div = document.createElement('div');
+                    div.className = 'team';
+                    let listaHtml = '';
+                    time.forEach((p, i) => { listaHtml += `<li>${i + 1}. ${p}</li>`; });
+                    div.innerHTML = `<h3>Time ${index + 1} <small>(${time.length} jogadores)</small></h3><ul>${listaHtml}</ul>`;
+                    container.appendChild(div);
+                }
+            });
         }
     </script>
 </body>

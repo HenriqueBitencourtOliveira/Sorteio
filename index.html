@@ -59,7 +59,7 @@
         #playersList {
             margin-top: 20px;
             text-align: left;
-            max-height: 200px;
+            max-height: 300px;
             overflow-y: auto;
             border-top: 1px solid #eee;
         }
@@ -124,12 +124,9 @@
    <script>
         let players = [];
         
-        // --- CONFIGURAÇÕES E REGRAS ---
         const CABECAS_DE_CHAVE = ['kauan', 'henrique', 'kaike']; 
         const DUPLA_DINAMICA = { lider: 'henrique', parceiro: 'careca' };
         const RESTRICAO_FELIPE = { jogador: 'fellipe', evitar: ['kauan', 'kaike'] };
-        
-        const MAX_TIMES = 4;
         const MAX_JOGADORES_POR_TIME = 5;
 
         function handleEnter(e) {
@@ -190,28 +187,30 @@
                 return;
             }
 
-            let times = Array.from({ length: MAX_TIMES }, () => []);
+            // Cálculo dinâmico de times (Ex: 16 jogadores / 5 = 3.2 -> Arredonda para 4 times)
+            let qtdTimes = Math.ceil(players.length / MAX_JOGADORES_POR_TIME);
+            
+            // Segurança: mín 2 times, max 4 times
+            if (qtdTimes > 4) qtdTimes = 4;
+            if (qtdTimes < 2 && players.length >= 2) qtdTimes = 2;
+
+            let times = Array.from({ length: qtdTimes }, () => []);
             let seedsDisponiveis = [];
             let restoDosJogadores = [];
             
-            // Variáveis especiais
             let carecaEncontrado = null;
             let fellipeEncontrado = null;
 
-            // 1. Separação inicial dos jogadores
+            // 1. Separação inicial
             players.forEach(nomeOriginal => {
                 const nomeLower = nomeOriginal.toLowerCase();
-
                 if (nomeLower === DUPLA_DINAMICA.parceiro) {
                     carecaEncontrado = nomeOriginal;
-                } 
-                else if (nomeLower === RESTRICAO_FELIPE.jogador) {
+                } else if (nomeLower === RESTRICAO_FELIPE.jogador) {
                     fellipeEncontrado = nomeOriginal;
-                }
-                else if (CABECAS_DE_CHAVE.includes(nomeLower)) {
+                } else if (CABECAS_DE_CHAVE.includes(nomeLower)) {
                     seedsDisponiveis.push(nomeOriginal);
-                } 
-                else {
+                } else {
                     restoDosJogadores.push(nomeOriginal);
                 }
             });
@@ -219,9 +218,9 @@
             seedsDisponiveis = shuffle(seedsDisponiveis);
             restoDosJogadores = shuffle(restoDosJogadores);
 
-            // 2. Distribui Cabeças de Chave (Kauan, Henrique, Kaike)
+            // 2. Distribui Cabeças de Chave
             seedsDisponiveis.forEach((seed, i) => {
-                if (i < MAX_TIMES) {
+                if (i < qtdTimes) {
                     times[i].push(seed);
                 } else {
                     restoDosJogadores.push(seed); 
@@ -237,27 +236,23 @@
                     }
                 });
             });
-
             if (indexTimeHenrique !== -1 && carecaEncontrado) {
                 times[indexTimeHenrique].push(carecaEncontrado);
             } else if (carecaEncontrado) {
                 restoDosJogadores.push(carecaEncontrado);
             }
 
-            // 4. Resolve o caso do "Fellipe" (Não pode com Kauan nem Kaike)
+            // 4. Resolve o caso do "Fellipe"
             if (fellipeEncontrado) {
                 let timesValidosParaFellipe = [];
-                
                 times.forEach((time, index) => {
                     const temProibido = time.some(jogador => 
                         RESTRICAO_FELIPE.evitar.includes(jogador.toLowerCase())
                     );
-                    
                     if (!temProibido) {
                         timesValidosParaFellipe.push(index);
                     }
                 });
-
                 if (timesValidosParaFellipe.length > 0) {
                     const indexSorteado = timesValidosParaFellipe[Math.floor(Math.random() * timesValidosParaFellipe.length)];
                     times[indexSorteado].push(fellipeEncontrado);
@@ -266,27 +261,18 @@
                 }
             }
 
-            // 5. Distribui o resto da galera
+            // 5. DISTRIBUIÇÃO SEQUENCIAL (A MUDANÇA ESTÁ AQUI)
+            // Agora enchemos o Time 1 até 5, depois o Time 2 até 5...
             restoDosJogadores = shuffle(restoDosJogadores);
-            let timeAtual = 0;
-            
-            while (restoDosJogadores.length > 0) {
-                if (times[timeAtual].length >= MAX_JOGADORES_POR_TIME) {
-                    timeAtual = (timeAtual + 1) % MAX_TIMES;
-                    
-                    if (times.every(t => t.length >= MAX_JOGADORES_POR_TIME)) {
-                         alert("Atenção: Times lotados! Alguns jogadores ficaram de fora.");
-                         break;
-                    }
-                    continue;
-                }
 
-                const jogador = restoDosJogadores.pop();
-                times[timeAtual].push(jogador);
-                timeAtual = (timeAtual + 1) % MAX_TIMES;
+            for (let i = 0; i < qtdTimes; i++) {
+                // Enquanto este time não tiver 5 E ainda tiver jogador sobrando, adiciona
+                while (times[i].length < MAX_JOGADORES_POR_TIME && restoDosJogadores.length > 0) {
+                    times[i].push(restoDosJogadores.pop());
+                }
             }
 
-            // 6. Mistura final dentro dos times
+            // 6. Mistura final para disfarçar a ordem
             times.forEach(time => shuffle(time));
 
             renderizarTimes(times);

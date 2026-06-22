@@ -124,9 +124,9 @@
    <script>
         let players = [];
         
-        // Novas definições de cabeças de chave e trio
+        // Novas definições de cabeças de chave e o Quarteto
         const CABECAS_DE_CHAVE = ['henrique', 'fellipe', 'jean']; 
-        const TRIO_DINAMICA = { lider: 'henrique', parceiros: ['allan', 'atila', 'ozias'] };
+        const QUARTETO = { lider: 'henrique', parceiros: ['allan', 'atila', 'pedrin'] };
         const MAX_JOGADORES_POR_TIME = 5;
 
         function handleEnter(e) {
@@ -200,7 +200,7 @@
             // 1. Separação inicial
             players.forEach(nomeOriginal => {
                 const nomeLower = nomeOriginal.toLowerCase();
-                if (TRIO_DINAMICA.parceiros.includes(nomeLower)) {
+                if (QUARTETO.parceiros.includes(nomeLower)) {
                     parceirosEncontrados.push(nomeOriginal);
                 } else if (CABECAS_DE_CHAVE.includes(nomeLower)) {
                     seedsDisponiveis.push(nomeOriginal);
@@ -221,15 +221,16 @@
                 }
             });
 
-            // 3. Resolve o "Trio Dinâmico" (Henrique + Careca + Átila)
+            // 3. Resolve o Quarteto (Líder + Parceiros)
             let indexTimeLider = -1;
             times.forEach((time, index) => {
-                if (time.some(jogador => jogador.toLowerCase() === TRIO_DINAMICA.lider)) {
+                if (time.some(jogador => jogador.toLowerCase() === QUARTETO.lider)) {
                     indexTimeLider = index;
                 }
             });
 
             if (indexTimeLider !== -1) {
+                // Adiciona os parceiros no time do líder
                 parceirosEncontrados.forEach(p => times[indexTimeLider].push(p));
             } else {
                 // Caso o líder não esteja nos cabeças de chave por algum motivo, volta parceiros pro bolo
@@ -244,7 +245,7 @@
                 }
             }
 
-            // 5. Mistura final para disfarçar quem era cabeça de chave
+            // 5. Mistura final para disfarçar quem era cabeça de chave ou parceiro
             times.forEach(time => shuffle(time));
 
             renderizarTimes(times);
